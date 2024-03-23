@@ -1,4 +1,4 @@
-package crypto
+package main
 
 import (
 	"math/big"
@@ -7,14 +7,16 @@ import (
 	"github.com/iden3/go-iden3-crypto/poseidon"
 )
 
-func EdDSAKeyPairGen() (babyjub.PrivateKey, babyjub.PublicKey) {
+type Crypto struct{}
+
+func (c *Crypto) EdDSAKeyPairGen() (babyjub.PrivateKey, babyjub.PublicKey) {
 	privateKey := babyjub.NewRandPrivKey()
 	pubKey := privateKey.Public()
 
 	return privateKey, *pubKey
 }
 
-func PoseidonHashBytes(data []byte) *big.Int {
+func (c *Crypto) PoseidonHashBytes(data []byte) *big.Int {
 	inputBigInt := big.NewInt(0)
 	inputBigInt.SetBytes(data)
 	inputArr := []*big.Int{inputBigInt}
@@ -24,25 +26,25 @@ func PoseidonHashBytes(data []byte) *big.Int {
 	return hash
 }
 
-func PoseidonHash(input *big.Int) *big.Int {
+func (c *Crypto) PoseidonHash(input *big.Int) *big.Int {
 	inputArr := []*big.Int{input}
 	hash, _ := poseidon.Hash(inputArr)
 
 	return hash
 }
 
-func PoseidonHashLeftRight(left *big.Int, right *big.Int) *big.Int {
+func (c *Crypto) PoseidonHashLeftRight(left *big.Int, right *big.Int) *big.Int {
 	input := []*big.Int{left, right}
 	hash, _ := poseidon.Hash(input)
 
 	return hash
 }
 
-func PoseidonHashPoint(point *babyjub.Point) *big.Int {
-	return PoseidonHashLeftRight(point.X, point.Y)
+func (c *Crypto) PoseidonHashPoint(point *babyjub.Point) *big.Int {
+	return c.PoseidonHashLeftRight(point.X, point.Y)
 }
 
-func EdDSASignature(privKey babyjub.PrivateKey, signData *big.Int) *babyjub.Signature {
+func (c *Crypto) EdDSASignature(privKey babyjub.PrivateKey, signData *big.Int) *babyjub.Signature {
 	signature := privKey.SignPoseidon(signData)
 	return signature
 }
