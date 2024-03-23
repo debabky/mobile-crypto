@@ -13,11 +13,21 @@ func (c DenchikC) New() *DenchikC {
 	return &DenchikC{}
 }
 
-func (c *DenchikC) EdDSAKeyPairGen() ([]byte, []byte, []byte) {
+type Keypair struct {
+	PrivateKey []byte
+	X          []byte
+	Y          []byte
+}
+
+func (c *DenchikC) EdDSAKeyPairGen() Keypair {
 	privateKey := babyjub.NewRandPrivKey()
 	pubKey := privateKey.Public()
 
-	return privateKey[:], pubKey.X.Bytes(), pubKey.Y.Bytes()
+	return Keypair{
+		PrivateKey: privateKey[:],
+		X:          pubKey.X.Bytes(),
+		Y:          pubKey.Y.Bytes(),
+	}
 }
 
 func (c *DenchikC) PoseidonHashBytes(data []byte) []byte {
@@ -48,10 +58,20 @@ func (c *DenchikC) PoseidonHashPoint(x, y []byte) []byte {
 	return c.PoseidonHashLeftRight(x, y)
 }
 
-func (c *DenchikC) EdDSASignature(privKeyBytes []byte, signData []byte) ([]byte, []byte, []byte) {
+type Signature struct {
+	X []byte
+	Y []byte
+	S []byte
+}
+
+func (c *DenchikC) EdDSASignature(privKeyBytes []byte, signData []byte) Signature {
 	privKey := babyjub.PrivateKey{}
 	copy(privKey[:], privKeyBytes)
 
 	signature := privKey.SignPoseidon(new(big.Int).SetBytes(signData))
-	return signature.R8.X.Bytes(), signature.R8.Y.Bytes(), signature.S.Bytes()
+	return Signature{
+		X: signature.R8.X.Bytes(),
+		Y: signature.R8.Y.Bytes(),
+		S: signature.S.Bytes(),
+	}
 }
