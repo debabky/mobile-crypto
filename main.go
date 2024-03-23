@@ -13,11 +13,11 @@ func (c DenchikC) New() *DenchikC {
 	return &DenchikC{}
 }
 
-func (c *DenchikC) EdDSAKeyPairGen() (babyjub.PrivateKey, babyjub.PublicKey) {
+func (c *DenchikC) EdDSAKeyPairGen() ([]byte, []byte, []byte) {
 	privateKey := babyjub.NewRandPrivKey()
 	pubKey := privateKey.Public()
 
-	return privateKey, *pubKey
+	return privateKey[:], pubKey.X.Bytes(), pubKey.Y.Bytes()
 }
 
 func (c *DenchikC) PoseidonHashBytes(data []byte) []byte {
@@ -30,25 +30,28 @@ func (c *DenchikC) PoseidonHashBytes(data []byte) []byte {
 	return hash.Bytes()
 }
 
-func (c *DenchikC) PoseidonHash(input *big.Int) []byte {
-	inputArr := []*big.Int{input}
+func (c *DenchikC) PoseidonHash(input []byte) []byte {
+	inputArr := []*big.Int{new(big.Int).SetBytes(input)}
 	hash, _ := poseidon.Hash(inputArr)
 
 	return hash.Bytes()
 }
 
-func (c *DenchikC) PoseidonHashLeftRight(left *big.Int, right *big.Int) []byte {
-	input := []*big.Int{left, right}
+func (c *DenchikC) PoseidonHashLeftRight(left, right []byte) []byte {
+	input := []*big.Int{new(big.Int).SetBytes(left), new(big.Int).SetBytes(right)}
 	hash, _ := poseidon.Hash(input)
 
 	return hash.Bytes()
 }
 
-func (c *DenchikC) PoseidonHashPoint(point *babyjub.Point) []byte {
-	return c.PoseidonHashLeftRight(point.X, point.Y)
+func (c *DenchikC) PoseidonHashPoint(x, y []byte) []byte {
+	return c.PoseidonHashLeftRight(x, y)
 }
 
-func (c *DenchikC) EdDSASignature(privKey babyjub.PrivateKey, signData *big.Int) *babyjub.Signature {
-	signature := privKey.SignPoseidon(signData)
-	return signature
+func (c *DenchikC) EdDSASignature(privKeyBytes []byte, signData []byte) ([]byte, []byte, []byte) {
+	privKey := babyjub.PrivateKey{}
+	copy(privKey[:], privKeyBytes)
+
+	signature := privKey.SignPoseidon(new(big.Int).SetBytes(signData))
+	return signature.R8.X.Bytes(), signature.R8.Y.Bytes(), signature.S.Bytes()
 }
